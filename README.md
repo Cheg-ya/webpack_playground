@@ -167,3 +167,57 @@ module.exports = {
 };
 ```
 - By setting the mode parameter to either development, production or none, you can enable webpack's built-in optimizations that correspond to each environment. The default value is production.
+
+### 11. Asset Management
+- Webpack 이전에 Grunt나 Gulp와 같은 툴을 이용해 이미지나 Dependency 파일 같은 asset을 `/src`에서 `/dist`나 `/build` 폴더로 옮기곤 했다.
+- Webpack의 등장 이후 Dependency graph를 이용해 다이나믹하게 번들링을 할 수 있게 되었다.
+- 어떤 dependency graph를 통해 어떤 dependency를 사용하고 있는지 명확하게 알 수 있게 되어 불필요한 모듈을 번들링 하지 않게 됨
+- Webpack의 가장 큰 장점은 JS이외에 파일들도 dependecy graph에 추가해 필요한 모든걸 한꺼번에 번들링 할 수 있다. (*이전에는 모듈(js파일)을 제외한 파일(이미지, css)들은 직접 dist파일에 옮겼나 싶다)
+- image, font, css 등의 파일을 추가할때 Loader를 이용한다.
+
+```
+npm install --save-dev style-loader css-loader
+
+  module.exports = {
+    entry: './src/index.js',
+    output: {
+      filename: 'bundle.js',
+      path: path.resolve(__dirname, 'dist')
+    },
++   module: {
++     rules: [
++       { // .css파일을 style-loader, css-loader를 이용해 변환
++         test: /\.css$/,
++         use: [
++           'style-loader',
++           'css-loader'
++         ]
++       }
++     ]
++   }
+  };
+```
+- 모듈이 실행되면 css 코드가 문자열화 되어 `<head>`태그 안에 `<style>`에 들어간다.
+- 빌드 후 index.html을 열어 보면 css가 적용되어 있는 것을 확인할 수 있고 브라우저 inspect 창에서 head 태그를 살펴보면 해당 코드를 볼 수 있다.
+- 에디터 내 index.html 파일에서는 해당 코드를 볼 수 없다.
+
+### 12. Dependency Graph
+- 하나의 파일이 다른 파일에 의존한다면 Webpack은 이를 dependency로 간주한다.
+- 이러한 특성은 Webpack이 CSS, image, font 등과 같은 non-code assets도 어플리케이션의 자바스크립트 라이브러리와 같은 dependency로 제공한다.
+- Webpack이 번들링을 시작할때 Entry Point에서 부터 시작해 재귀를 돌면서 Dependency graph를 그리게 되고 모두 묶어 하나의 파일로 만든다. (경우에 따라 복수)
+- 이미지 폰트 css파일의 경우 `output`directory 폴더에 들어감
+- 이미지 파일의 경우 번들링 후 파일 이름이 바뀌게 되는데 해당 이미지의 경로를 사용하는 부분도 모두 바뀜
+
+```
+// Webpack이 번들링 후 부여받은 이름으로 바꿔줌
+<image src='./apple.jpg' /> // 내가 작성한 코드
+<image src='./4asdfj234jwqwf.jpg' /> // 번들링 후 바뀐 url 주소
+```
+
+### 13. Loading Data
+- Loader를 이용하면 CSVs, TSVs, and XML 형태의 데이터 파일도 dependency로 추가할 수 있다.
+- JSON은 built-in으로 제공되므로 별도의 설치는 필요없다.
+
+```
+npm install --save-dev csv-loader xml-loader
+```
