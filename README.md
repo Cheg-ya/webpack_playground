@@ -178,24 +178,24 @@ module.exports = {
 ```
 npm install --save-dev style-loader css-loader
 
-  module.exports = {
-    entry: './src/index.js',
-    output: {
-      filename: 'bundle.js',
-      path: path.resolve(__dirname, 'dist')
-    },
-+   module: {
-+     rules: [
-+       { // .css파일을 style-loader, css-loader를 이용해 변환
-+         test: /\.css$/,
-+         use: [
-+           'style-loader',
-+           'css-loader'
-+         ]
-+       }
-+     ]
-+   }
-  };
+module.exports = {
+  entry: './src/index.js',
+  output: {
+    filename: 'bundle.js',
+    path: path.resolve(__dirname, 'dist')
+  },
+  module: {
+    rules: [
+      { // .css파일을 style-loader, css-loader를 이용해 변환
+        test: /\.css$/,
+        use: [
+          'style-loader',
+          'css-loader'
+        ]
+      }
+    ]
+  }
+};
 ```
 - 모듈이 실행되면 css 코드가 문자열화 되어 `<head>`태그 안에 `<style>`에 들어간다.
 - 빌드 후 index.html을 열어 보면 css가 적용되어 있는 것을 확인할 수 있고 브라우저 inspect 창에서 head 태그를 살펴보면 해당 코드를 볼 수 있다.
@@ -226,3 +226,84 @@ npm install --save-dev csv-loader xml-loader
 - Entry Point의 filename이 변경되고 `build`할 때 `index.html`에 해당 변경사항을 자동 적용시키고 싶다면 `HtmlWebpackPlugin` 을 사용한다.
 - `HtmlWebpackPlugin`는 default로 `index.html`를 생성한다. `dist` 폴더안에 이미 있다면 해당 파일을 덮어씌운다.
 - `CleanWebpackPlugin`은 `dist`폴더를 지운다. 덕분에 webpack config의 변경이 생길 때 사용하지 않는 불필요한 파일들을 지우고 `HtmlWebpackPlugin`을 통해 새로 생성한다.
+
+## 7 May
+
+### 1. Development
+```
+// Set mode property for Webpack development environment
+
+module.exports = {
+  ...
+  mode: 'development'
+}
+```
+- `Webpack`을 이용해 코드를 번들링하게 되면 에러를 찾기가 어렵다.
+- 예를들어 `Webpack`이 `a.js b.js c.js`를 번들링해 `bundle.js`를 만들었다고 가정하자.
+- 위 세개의 파일 중 어느 한 군대서 에러나 경고가 발생하면 `stack trace`는 단순히 `bundle.js`를 가리킨다.
+- [source map](https://blog.teamtreehouse.com/introduction-source-maps)을 이용하면 컴파일된 코드와 원래 코드를 맵핑해준다. 따라서 `b.js`에서 에러가 발생했다면 정확히 어느 코드에서 에러가 발생했는지 알 수 있다.
+- source map을 사용하려면 devtool 프로퍼티를 추가하면 된다.
+- [기타 source map 옵션](https://webpack.js.org/configuration/devtool/)
+
+```
+module.exports = {
+  ...
+  devtool: 'inline-source-map'
+};
+```
+### 2. Development Tool
+- 위에 예제에서는 매번 `npm run build`으로 코드를 컴파일해왔다. Webpack은 코드가 수정될 때 자동으로 컴파일 해주는 기능을 제공한다.
+
+#### 1. Webpack Watch Mode
+- Watch mode를 이용하면 코드가 수정될 때 마다 자동으로 코드가 컴파일 된다. 단, 컴파일 후 브라우저를 새로고침해야만 변경사항을 확인 할 수 있는 단점이 있다.
+```
+// package.json
+{
+  ...
+  "script": {
+    "watch": "webpack --watch"
+  }
+};
+```
+
+#### 2. Webpack Dev Server
+- `webpack-dev-server`은 Watch mode의 단점인 새로고침없이 컴파일과 동시에 자동으로 브라우저를 새로고침해준다.
+```
+npm install --save-dev webpack-dev-server
+
+// webpack.config.js
+module.exports  = {
+  ...
+  devServer: {
+    contentBase: './dist', // 생략 가능
+    // port: 3000,
+    // open: true,
+    // publicPath: '/assets' visit localhost:8080/assets/
+  }
+};
+
+// package.json
+{
+  ...
+  "script": {
+    "start": "webpack-dev-server --open"
+  }
+}
+
+// open flag는 컴파일 후 자동으로 브라우저를 통해 localhost로 이동한다.
+
+npm run dev // visit localhost:8080
+```
+- `webpack-dev-server`는 로컬 서버를 만들어 준다.
+- default port는 8080
+- devServer에 port 프로퍼티를 추가해 port를 바꿀 수 있다.
+- open flag 대신 open: true 프로퍼티를 추가해도 같은 결과
+- `webpack-dev-server`는 컴파일 후 `output`파일을 만들지 않고 컴파일된 번들된 파일을 메모리에 저정하고 `/(root path)`에서 마운트 된 파일인 것처럼 제공한다. (실제 서버로부터 파일을 응답받은 것처럼)
+- `/`가 아닌 다른 path에서 번들된 파일을 불러오고 싶다면 `publicPath` 옵션을 추가할 수 있다.
+- `publicPath`를 설정하면 dist가 아닌 설정된 경로에 번들된 파일이 저장된다. (in memory)
+
+#### 3. Webpack Dev MiddleWare
+- `webpack-dev-middleware` is a wrapper that will emit files processed by `webpack` to a server.
+- `webpack-dev-middleware`는 `express-style` 개발 미들웨어로 개발 환경에서만 사용된다. `webpack-dev-server` 내부적으로 사용되고 있으나 설치 후 직접 커스텀 셋업이 가능하다.
+- `webpack-dev-server`나 `Express`와 함께 사용할 수 있다.
+- to be continue

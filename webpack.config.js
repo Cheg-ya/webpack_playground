@@ -26,7 +26,6 @@ module.exports = {
   mode: 'development',
   devtool: 'inline-cheap-source-map',
   devServer: {
-    contentBase: './dist',
     port: 3000,
     open: true
   }
