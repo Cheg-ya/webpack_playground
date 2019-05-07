@@ -227,7 +227,7 @@ npm install --save-dev csv-loader xml-loader
 - `HtmlWebpackPlugin`는 default로 `index.html`를 생성한다. `dist` 폴더안에 이미 있다면 해당 파일을 덮어씌운다.
 - `CleanWebpackPlugin`은 `dist`폴더를 지운다. 덕분에 webpack config의 변경이 생길 때 사용하지 않는 불필요한 파일들을 지우고 `HtmlWebpackPlugin`을 통해 새로 생성한다.
 
-## 7 May
+## 7 May123
 
 ### 1. Development
 ```
