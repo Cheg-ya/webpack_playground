@@ -2,21 +2,30 @@ const path = require('path');
 const outputDirectory = 'dist';
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CleanWebpackPlugin = require('clean-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = {
   entry: {
-    app: './src/index.js',
-    print: './src/print.js'
+    app: './src/index.js'
   },
   output: {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, outputDirectory)
   },
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
+      }
+    ]
+  },
   plugins: [
     new CleanWebpackPlugin(),
     new HtmlWebpackPlugin({
       title: 'Output Management'
-    })
+    }),
+    new webpack.HotModuleReplacementPlugin()
   ],
   optimization: {
     splitChunks: {
@@ -27,6 +36,7 @@ module.exports = {
   devtool: 'inline-cheap-source-map',
   devServer: {
     port: 3000,
-    open: true
+    open: true,
+    hot: true
   }
 };

@@ -307,3 +307,93 @@ npm run dev // visit localhost:8080
 - `webpack-dev-middleware`는 `express-style` 개발 미들웨어로 개발 환경에서만 사용된다. `webpack-dev-server` 내부적으로 사용되고 있으나 설치 후 직접 커스텀 셋업이 가능하다.
 - `webpack-dev-server`나 `Express`와 함께 사용할 수 있다.
 - to be continue
+
+## 8 May
+
+### 1. Hot Module Replacement(HMR)
+- HMR은 어플리케이션이 작동하고 있는 동안 모듈이 추가, 제거, 변경되었을 때 전체 페이지를 리로딩하지 않고 변경사항만 업데이트한다.
+- 이러한 기능 덕에 어플리케이션의 상태 정보를 유지시킬 수 있고 변경된 부분만 적용해서 원래 페이지를 그대로 보여주기 때문에 개발시간을 절약할 수 있다.
+- 예를 들면 JS, CSS 코드의 변경 사항을 브라우저 개발자 도구에서도 즉시 확인할 수 있다.
+- HMR은 개발 환경에서만 사용된다.
+- 아래의 예제는 사용자가 만든 helper function에 HMR을 직접 적용한 예이다.
+
+```
+HMR을 적용하려면 webpack-dev-server의 설정을 변경해야 한다.
+
+// webpack.config.js
+...
+const webpack = require('webpack');
+
+module.exports = {
+  entry: {
+    app: './src/index.js'
+  },
+  ...
+  plugins: [
+    ...
+    new webpack.HotModuleReplacementPlugin()
+  ],
+  devServer: {
+    ...
+    hot: true
+  }
+};
+
+// index.js
+import printMe from './print.js';
+
+...
+
+if (module.hot) {
+  module.hot.accept('./print.js', () => {
+    console.log('Accepting the updated printMe module!');
+    printMe();
+  });
+}
+```
+
+- 위와 같이 변경하면 `printMe` 함수의 내용이 변경되면 바로 적용된다. 그러나 `element.onclick = printMe`에 업데이트 내용이 반영되지 않으므로 `element`에 업데이트된 `printMe`를 다시 바인딩 시켜야한다.
+```
+// index.js
+...
+
+let element = component(); // Store the element to re-render on print.js changes
+document.body.appendChild(element);
+
+if (module.hot) {
+  module.hot.accept('./print.js', function() {
+    console.log('Accepting the updated printMe module!');
+    printMe();
+    document.body.removeChild(element);
+    element = component(); // Re-render the "component" to update the click handler
+    document.body.appendChild(element);
+  });
+}
+```
+
+- 위에 처럼 모듈마다 하나씩 HMR 적용하는 것이 번거로워 보일 수 있다.
+- HMR과 `loader`를 함께 사용하면 해당 로더가 변환하는 파일(CSS, Image, Font etc.)에 HMR을 적용할 수 있고 `index.js`에 해당 `Loader`가 변환하는 파일만 `import`하면 된다.
+- 아래 예제는 HMR과 CSS를 함께 사용한 예이다.
+
+```
+//webpack.config.js
+
+module.exports = {
+  ...
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader']
+      }
+    ]
+  }
+};
+
+// index.js
+import './style.css';
+...
+```
+
+- [React Hot Loader](https://github.com/gaearon/react-hot-loader)를 사용하면 컴포넌트에 HMR를 적용할 수 있다.
+- 이외 여러가지 `Loader`를 이용해 HMR을 적용해보자.
