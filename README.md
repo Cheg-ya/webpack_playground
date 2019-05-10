@@ -119,8 +119,9 @@ module.exports = {
 };
 ```
  ### 8. Loaders
- - Webpack은 Javascript와 JSON파일만 이해한다.
- - Loader는 CSS, Font, image 등의 파일을 변환시켜 Webpack이 인식할 수 있게 해준다. (Dependency graph에 추가됨)
+ - `Webpack`은 Javascript와 JSON파일만 이해한다.
+ - `Loader`는 CSS, Font, Image 등의 파일을 변환시켜 Webpack이 인식할 수 있게 해준다. (Dependency graph에 추가됨)
+ - `Webpack`은 CSS, Font, Image, Templating, Transpiling을 어떻게 다룰지 모르기 때문에 `Loader`라는 애를 이용해 그 작업을 맡긴다. `Loader`는 `Webpack`이 이해할 수 있게 변환해주는 일종의 번역기 or 통역기 역할을 한다.
  
  ```
  const path = require('path');
@@ -397,3 +398,66 @@ import './style.css';
 
 - [React Hot Loader](https://github.com/gaearon/react-hot-loader)를 사용하면 컴포넌트에 HMR를 적용할 수 있다.
 - 이외 여러가지 `Loader`를 이용해 HMR을 적용해보자.
+
+## 9 May
+### 1. Babel 설치 및 설정
+- `Babel`은 JS 최신 문법(ES6+)을 하위버전 코드로 바꿔 하위 브라우저에서도 호환이 되도록 해주는 툴체인이다.
+- `Webpack`에 `Babel`을 설정하려면 몇 가지 `loader`를 설치해야 한다.
+```
+// -D === --save-dev
+install -D @babel/core @babel/preset-env babel-loader
+```
+- `@babel/core`: `babel` API 콜렉션
+- `babel-loader`: `loader`는 `file`뿐만 아니라 `frameworks, linting, testing`, 각종 `templating, transpiling, JSON loader`등도 포함된다. `babel-loader`는 JS를 변환해주는 로더이다. \
+*$[webapck enables use of loaders to preprocess fiels.](https://webpack.js.org/loaders/)*
+- [`@babel/preset-env`](https://stackoverflow.com/questions/46684753/what-is-a-babel-preset-what-does-stage-mean): `preset`은 JS 기능을 지원하는데 사용되는 `Plugin`의 콜렉션을 의미한다. `Babel` 문서에서는 `preset`을 `babel configuration 파일인 .babelrc`에서 사용하기를 권장한다. \
+*$[what is babel-preset and babel-plugin?](https://www.fullstackreact.com/articles/what-are-babel-plugins-and-presets/)*
+```
+// .babelrc
+{
+  "presets": ["@babel/preset-env"]
+}
+
+// webpack.config.js
+...
+module: {
+  rules: [
+    {
+      test:/\.js$/, // js파일이 타겟
+      exclude: /node_modules/, // node_modules 파일은 타겟에서 제외
+      use: {
+        loader: 'babel-loader'
+      }
+    }
+  ]
+}
+```
+
+### 2. Reactjs 셋팅하기
+- React의 JSX 문법 역시 `babel`을 이용해 변환할 수 있다.
+```
+npm i -D @babel/preset-react
+npm i --save react react-dom
+
+// .babelrc
+{
+  "presets": [
+    "@babel/preset-env",
+    "@babel/preset-react" // preset 설정
+  ]
+}
+
+// webpack.config.js
+...
+module: {
+  rules: [
+    {
+      test:/\.(js|jsx)/, // jsx 추가
+      exclude: /node_modules/,
+      use: {
+        loader: 'babel-loader'
+      }
+    }
+  ]
+}
+```
